@@ -1,63 +1,58 @@
-import React, {useState, useContext, useEffect} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  FlatList,
-  Image,
-  TouchableOpacity,
-} from 'react-native';
+import React, {useState, useEffect} from 'react';
+import {View, Text, StyleSheet, SafeAreaView, FlatList} from 'react-native';
+import {useDispatch, useSelector} from 'react-redux';
+import Toast from 'react-native-simple-toast';
 
 import {Colors, height, Typography, width} from '../styles';
 import {searchCharacters} from '../api';
-import IconFA from 'react-native-vector-icons/FontAwesome';
 import Search from '../components/Search';
-import Card from '../components/Card';
+import {setFavorites, removeFavorites} from '../redux/Action';
+import CharacterCard from '../components/CharacterCard';
+import Loader from '../components/Loader';
 
 const SearchScreen = ({navigation: {goBack}}) => {
   const [characters, setCharacters] = useState([]);
-  const [tempCharacters, setTempCharacters] = useState([]);
+  const red_state = useSelector(state => state?.home?.favorites);
+  const dispatch = useDispatch();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     onChangeText('w');
   }, []);
 
   const onChangeText = async text => {
+    setLoading(true);
     try {
       let response = await searchCharacters(text);
-      setTempCharacters(response);
       setCharacters(response);
+      setLoading(false);
     } catch (e) {
       console.log(e);
+      setLoading(false);
     }
   };
 
-  const onFavIconPress = () => {};
+  const onFavIconPress = (item, bookMarked) => {
+    if (!bookMarked) {
+      dispatch(setFavorites(item));
+      Toast.show('Added to favorites');
+    } else {
+      dispatch(removeFavorites(item?.char_id));
+      Toast.show('Removed from favorites');
+    }
+  };
   const onCloseBTNPress = () => goBack();
+  const onCardItemPress = item => {
+    dispatch(setSingleCharData(item));
+    navigate('singleCharacter');
+  };
 
-  const _renderItem = ({item}) => {
+  const _renderEmptyComponent = () => {
     return (
-      <Card style={styles.itemContainer}>
-        <Image source={{uri: item?.img}} style={styles.itemIMG} />
-        <View style={styles.row}>
-          <View>
-            <Text
-              style={[Typography.mediumText, styles.width3]}
-              numberOfLines={1}>
-              {item?.name}
-            </Text>
-            <Text
-              style={[Typography.extraSmallTextThin, styles.width3]}
-              numberOfLines={1}>
-              {item?.nickname}
-            </Text>
-          </View>
-          <TouchableOpacity onPress={onFavIconPress}>
-            <IconFA name="heart-o" size={20} color={Colors.WHITE} />
-          </TouchableOpacity>
-        </View>
-      </Card>
+      <View>
+        <Text style={styles.emptyText}>No Character found</Text>
+        <Text style={Typography.mediumTextThin}>Try again</Text>
+      </View>
     );
   };
 
@@ -71,12 +66,23 @@ const SearchScreen = ({navigation: {goBack}}) => {
         />
       </View>
       <View style={styles.container}>
-        <FlatList
-          data={tempCharacters}
-          renderItem={({item}) => <_renderItem item={item} />}
-          keyExtractor={(item, index) => 'key' + index}
-          numColumns={2}
-        />
+        {loading && <Loader />}
+        {!loading && (
+          <FlatList
+            data={characters}
+            renderItem={({item}) => (
+              <CharacterCard
+                item={item}
+                red_state={red_state}
+                onFavIconPress={onFavIconPress}
+                onCardItemPress={onCardItemPress}
+              />
+            )}
+            keyExtractor={(item, index) => 'key' + index}
+            numColumns={2}
+            ListEmptyComponent={<_renderEmptyComponent />}
+          />
+        )}
       </View>
     </SafeAreaView>
   );
@@ -97,12 +103,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 15,
   },
-  row0: {flexDirection: 'row', alignItems: 'center'},
-  marginLeft15: {marginLeft: 15},
-  itemContainer: {margin: 10},
-  width3: {width: width * 0.3},
-  itemIMG: {height: height * 0.25, width: width * 0.43, borderRadius: 6},
-  row: {flexDirection: 'row', justifyContent: 'space-between', marginTop: 10},
+  emptyText: {...Typography.largeText, color: Colors.PRIMARY},
 });
 
 export default SearchScreen;

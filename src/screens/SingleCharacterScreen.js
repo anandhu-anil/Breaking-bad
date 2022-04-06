@@ -19,7 +19,6 @@ import Card from '../components/Card';
 
 const SingleCharacterScreen = () => {
   const red_state = useSelector(state => state?.home?.singleCharacter);
-  const onBookMarkICNPress = () => {};
   const [otherCharacters, setOtherCharacters] = useState([]);
 
   useEffect(() => {

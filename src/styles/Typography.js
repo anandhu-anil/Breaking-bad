@@ -33,7 +33,7 @@ export default StyleSheet.create({
     color: Colors.WHITE,
   },
   mediumTextThin: {
-    fontFamily: 'Roboto-Bold',
+    fontFamily: 'Roboto-Thin',
     fontSize: 17,
     color: Colors.WHITE,
   },
