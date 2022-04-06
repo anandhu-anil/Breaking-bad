@@ -81,6 +81,7 @@ const SearchScreen = ({navigation: {goBack}}) => {
             keyExtractor={(item, index) => 'key' + index}
             numColumns={2}
             ListEmptyComponent={<_renderEmptyComponent />}
+            ListFooterComponent={<View style={{padding: 60}} />}
           />
         )}
       </View>
