@@ -6,11 +6,15 @@ import Toast from 'react-native-simple-toast';
 import {Colors, height, Typography, width} from '../styles';
 import {searchCharacters} from '../api';
 import Search from '../components/Search';
-import {setFavorites, removeFavorites} from '../redux/Action';
+import {
+  setFavorites,
+  removeFavorites,
+  setSingleCharData,
+} from '../redux/Action';
 import CharacterCard from '../components/CharacterCard';
 import Loader from '../components/Loader';
 
-const SearchScreen = ({navigation: {goBack}}) => {
+const SearchScreen = ({navigation: {navigate, goBack}}) => {
   const [characters, setCharacters] = useState([]);
   const red_state = useSelector(state => state?.home?.favorites);
   const dispatch = useDispatch();

@@ -1,4 +1,4 @@
-import React, {useState, useContext, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   View,
   Text,
@@ -7,130 +7,152 @@ import {
   ScrollView,
   ImageBackground,
   Image,
-  TouchableOpacity,
 } from 'react-native';
-import {useSelector} from 'react-redux';
 import IconANT from 'react-native-vector-icons/AntDesign';
 import moment from 'moment';
+import {useDispatch, useSelector} from 'react-redux';
+import {useFocusEffect} from '@react-navigation/native';
 
 import {Colors, height, Typography, width} from '../styles';
 import {getOtherCharacters} from '../api';
 import Card from '../components/Card';
+import {setSingleCharData} from '../redux/Action';
+import Loader from '../components/Loader';
 
-const SingleCharacterScreen = () => {
+const SingleCharacterScreen = ({navigation: {navigate}}) => {
   const red_state = useSelector(state => state?.home?.singleCharacter);
   const [otherCharacters, setOtherCharacters] = useState([]);
+  const dispatch = useDispatch();
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadOtherCharacters();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      loadOtherCharacters();
+    }, [red_state]),
+  );
 
   const loadOtherCharacters = async () => {
     try {
       let response = await getOtherCharacters(red_state.category);
       let filteredData = response.filter(f => f.char_id !== red_state.char_id);
       setOtherCharacters(filteredData.slice(0, 5));
+      setLoading(false);
     } catch (e) {
       console.log(e);
+      setLoading(false);
     }
+  };
+  const onCardItemPress = item => {
+    dispatch(setSingleCharData(item));
+    navigate('singleCharacter');
   };
 
   return (
     <SafeAreaView style={styles.mainContainer}>
       <ScrollView style={styles.mainContainer}>
-        <View style={styles.container}>
-          <ImageBackground
-            source={{uri: red_state.img}}
-            style={styles.imgBack}
-            blurRadius={3}>
-            <View style={styles.imgMask}>
-              <Image source={{uri: red_state.img}} style={styles.innerIMG} />
-              <View style={styles.height20} />
-              <Text style={Typography.largeTextBold}>{red_state.name}</Text>
-              <View style={styles.height5} />
-              <Text style={Typography.extraSmallTextThin}>
-                {red_state.nickname}
-              </Text>
-            </View>
-          </ImageBackground>
-          <View style={styles.innerContainer}>
-            <View style={styles.row}>
-              <View>
-                <Text style={styles.titleText}>Potrayed</Text>
+        {loading && <Loader />}
+        {!loading && (
+          <View style={styles.container}>
+            <ImageBackground
+              source={{uri: red_state.img}}
+              style={styles.imgBack}
+              blurRadius={3}>
+              <View style={styles.imgMask}>
+                <Image source={{uri: red_state.img}} style={styles.innerIMG} />
+                <View style={styles.height20} />
+                <Text style={Typography.largeTextBold}>{red_state.name}</Text>
                 <View style={styles.height5} />
                 <Text style={Typography.extraSmallTextThin}>
-                  {red_state.portrayed}
+                  {red_state.nickname}
                 </Text>
               </View>
-              {red_state.birthday !== 'Unknown' && (
-                <View style={styles.row0}>
+            </ImageBackground>
+            <View style={styles.innerContainer}>
+              <View style={styles.row}>
+                <View>
+                  <Text style={styles.titleText}>Potrayed</Text>
+                  <View style={styles.height5} />
                   <Text style={Typography.extraSmallTextThin}>
-                    {moment(red_state.birthday, 'DD-MM-YYYY').format(
-                      'D-MMMM-YYYY',
-                    )}
-                  </Text>
-                  <IconANT
-                    name="gift"
-                    size={18}
-                    color={Colors.WHITE}
-                    style={styles.marginLeft10}
-                  />
-                </View>
-              )}
-            </View>
-            <View style={styles.height20} />
-            <Text style={styles.titleText}>Occupation</Text>
-            <View style={styles.height5} />
-            {red_state?.occupation?.map((Occ, index) => (
-              <Text style={Typography.extraSmallTextThin} key={index}>
-                {Occ}
-              </Text>
-            ))}
-            <View style={styles.height20} />
-            <Text style={styles.titleText}>Appeared in</Text>
-            <View style={styles.height10} />
-            <ScrollView
-              horizontal={true}
-              showsHorizontalScrollIndicator={false}>
-              {red_state?.appearance?.map((app, index) => (
-                <View key={index} style={styles.horizontalContainer}>
-                  <Text style={Typography.extraSmallTextThin}>
-                    Season {app}
+                    {red_state.portrayed}
                   </Text>
                 </View>
+                {red_state.birthday !== 'Unknown' && (
+                  <View style={styles.row0}>
+                    <Text style={Typography.extraSmallTextThin}>
+                      {moment(red_state.birthday, 'DD-MM-YYYY').format(
+                        'D-MMMM-YYYY',
+                      )}
+                    </Text>
+                    <IconANT
+                      name="gift"
+                      size={18}
+                      color={Colors.WHITE}
+                      style={styles.marginLeft10}
+                    />
+                  </View>
+                )}
+              </View>
+              <View style={styles.height20} />
+              <Text style={styles.titleText}>Occupation</Text>
+              <View style={styles.height5} />
+              {red_state?.occupation?.map((Occ, index) => (
+                <Text style={Typography.extraSmallTextThin} key={index}>
+                  {Occ}
+                </Text>
               ))}
-            </ScrollView>
-            <View style={styles.height20} />
-            <View style={styles.height20} />
-            <Text style={Typography.largeTextBold}>Other characters</Text>
-            <View style={styles.height20} />
-            <ScrollView
-              horizontal={true}
-              showsHorizontalScrollIndicator={false}>
-              {otherCharacters.map((char, index) => {
-                return (
-                  <Card key={index} style={styles.itemContainer}>
-                    <Image source={{uri: char?.img}} style={styles.itemIMG} />
-                    <View style={styles.row}>
-                      <View>
-                        <Text
-                          style={[Typography.mediumText, styles.width3]}
-                          numberOfLines={1}>
-                          {char?.name}
-                        </Text>
-                        <Text
-                          style={[Typography.extraSmallTextThin, styles.width3]}
-                          numberOfLines={1}>
-                          {char?.nickname}
-                        </Text>
+              <View style={styles.height20} />
+              <Text style={styles.titleText}>Appeared in</Text>
+              <View style={styles.height10} />
+              <ScrollView
+                horizontal={true}
+                showsHorizontalScrollIndicator={false}>
+                {red_state?.appearance?.map((app, index) => (
+                  <View key={index} style={styles.horizontalContainer}>
+                    <Text style={Typography.extraSmallTextThin}>
+                      Season {app}
+                    </Text>
+                  </View>
+                ))}
+              </ScrollView>
+              <View style={styles.height20} />
+              <View style={styles.height20} />
+              <Text style={Typography.largeTextBold}>Other characters</Text>
+              <View style={styles.height20} />
+              <ScrollView
+                horizontal={true}
+                showsHorizontalScrollIndicator={false}>
+                {otherCharacters.map((char, index) => {
+                  return (
+                    <Card
+                      key={index}
+                      style={styles.itemContainer}
+                      onPress={() => onCardItemPress(char)}>
+                      <Image source={{uri: char?.img}} style={styles.itemIMG} />
+                      <View style={styles.row}>
+                        <View>
+                          <Text
+                            style={[Typography.mediumText, styles.width3]}
+                            numberOfLines={1}>
+                            {char?.name}
+                          </Text>
+                          <Text
+                            style={[
+                              Typography.extraSmallTextThin,
+                              styles.width3,
+                            ]}
+                            numberOfLines={1}>
+                            {char?.nickname}
+                          </Text>
+                        </View>
                       </View>
-                    </View>
-                  </Card>
-                );
-              })}
-            </ScrollView>
+                    </Card>
+                  );
+                })}
+              </ScrollView>
+            </View>
           </View>
-        </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
